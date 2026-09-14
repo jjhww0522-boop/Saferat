@@ -1,4 +1,38 @@
-# 사업장 안전관리 앱 — Orca 개발 문서 묶음
+# Saferat — 사업장 안전관리
+
+## 로컬 업무 데모 실행
+
+P0·P1: 가상 사업장 정보 → 자료·수행 기록 → JH 검토 → 보완 → 새 버전 재제출을 연결한 한국어 웹앱입니다. 실제 법적 의무 판정 서비스가 아닙니다.
+
+필요 환경: Node 24 LTS, npm 11. PowerShell에서는 `npm.cmd`를 사용합니다.
+
+```powershell
+npm.cmd ci
+npm.cmd run dev
+```
+
+`http://127.0.0.1:3000`에서 ‘가상 사업장으로 체험하기’를 선택합니다. 키 없이 실행됩니다. 설정을 바꾸려면 `.env.example`을 참고해 비공개 `.env.local`을 만듭니다. 이 버전의 live 모드는 미연동 오류를 표시합니다.
+
+- 오른쪽 위 역할 메뉴: A 고객 → JH 배정 검토자 → A 고객 순으로 제출·보완·재제출을 체험합니다.
+- 실제 자료·개인정보 입력 금지. 제공된 가상 샘플만 첨부할 수 있습니다.
+- 서버 메모리 저장: 새로고침 유지, 서버 재시작·새 체험 시작 시 초기화. 여러 프로세스/공개 배포용 저장소가 아닙니다.
+- `/emergency`는 체험 세션·AI·로그인 없이 열립니다.
+
+검증 명령:
+
+```powershell
+npm.cmd run typecheck
+npm.cmd run lint
+npm.cmd test
+npm.cmd run build
+npm.cmd run test:e2e
+```
+
+E2E는 먼저 만든 프로덕션 빌드와 Windows에 설치된 Microsoft Edge를 사용합니다. 다른 서버가 3000번 포트에서 실행 중이면 종료한 뒤 검증하세요. 실행 결과·미검증 범위는 [진행 기록](docs/PROGRESS.md), 디자인 변경은 [디자인 기준](docs/DESIGN.md), 법령 준비는 [조사 원장](docs/LEGAL_PREPARATION.md), 협업 상태는 [오케스트레이션 기록](docs/ORCHESTRATION.md)을 확인하세요.
+
+---
+
+# 원본 개발 문서 묶음
 
 작성일: 2026-09-14 · 버전: 1.0 · 문서 상태: 개발 실행 명세
 
