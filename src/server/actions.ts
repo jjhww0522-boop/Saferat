@@ -5,26 +5,18 @@ import { redirect, unstable_rethrow } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { applyCommand, WorkflowError } from '@/domain/workflow';
-import { readConfig } from '@/domain/config';
+import { requireDemoConfig } from '@/domain/config';
 import { context, newSession, requireWorkplace } from './store';
-import type { ActionResult, Fact, Persona } from '@/domain/types';
+import type { ActionResult, Fact } from '@/domain/types';
 
 const cookieOptions = { httpOnly: true, sameSite: 'lax' as const, path: '/', maxAge: 86400 };
 export async function startDemo() {
-  readConfig(process.env);
+  requireDemoConfig(process.env);
   const jar = await cookies();
   jar.set('safety-demo', newSession(), cookieOptions);
-  jar.set('safety-persona', 'member-a', cookieOptions);
+  jar.delete('safety-persona');
   jar.set('safety-workplace', 'facility', cookieOptions);
   redirect('/app');
-}
-export async function changePersona(form: FormData) {
-  await context();
-  const persona = z.enum(['member-a', 'member-b', 'reviewer', 'unassigned']).parse(form.get('persona')) satisfies Persona;
-  const jar = await cookies();
-  jar.set('safety-persona', persona, cookieOptions);
-  jar.set('safety-workplace', persona === 'member-b' ? 'other' : 'facility', cookieOptions);
-  redirect(persona === 'reviewer' || persona === 'unassigned' ? '/ops' : '/app');
 }
 export async function selectWorkplace(form: FormData) {
   const ctx = await context();

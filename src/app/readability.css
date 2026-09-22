@@ -1,0 +1,129 @@
+/* Shared reading hierarchy. Text sizes are never reduced to fit a card. */
+body { font-family: var(--font-pretendard), 'Malgun Gothic', sans-serif; font-size: 17px; line-height: 1.7; }
+button, input, select, textarea { font-family: inherit; }
+h1, h2, h3, h4 { color: var(--ink); letter-spacing: -.025em; overflow-wrap: anywhere; }
+p, label, summary, a { overflow-wrap: anywhere; }
+.page-content { padding: 36px 40px 40px; animation: none; }
+.page-heading { margin-bottom: 28px; }
+.page-heading h1 { font-size: 32px; line-height: 1.4; font-weight: 700; }
+.page-heading .lede { font-size: 17px; max-width: 60ch; line-height: 1.75; }
+.eyebrow, .small-label { font-size: 14px; font-weight: 600; letter-spacing: .01em; }
+.helper, .source-scope, label small, .risk-step-panel label .helper { font-size: 15px; line-height: 1.75; color: var(--muted); }
+.button { min-height: 50px; padding: 12px 18px; font-size: 16px; font-weight: 600; border-radius: 12px; white-space: normal; text-align: center; }
+.text-link { color: var(--blue-hover); font-size: 16px; line-height: 1.6; min-height: 44px; }
+button.text-link { background: transparent; border: 0; font-family: inherit; cursor: pointer; padding: 10px 0; }
+label { font-size: 17px; gap: 10px; line-height: 1.6; }
+input:not([type=checkbox]):not([type=hidden]), textarea, select { font-size: 17px; line-height: 1.6; background: white; border-color: #8291a7; border-radius: 10px; padding: 13px 14px; min-height: 52px; }
+input::placeholder, textarea::placeholder { font-size: 15px; color: #5d6b7e; }
+:focus-visible { outline: 3px solid #2459cf; outline-offset: 4px; }
+.sidebar { background: white; padding-top: 30px; }
+.brand { font-size: 18px; }.brand small { font-size: 14px; line-height: 1.6; }
+.brand-symbol { background: var(--blue); color: white; }
+.sidebar-label, .sidebar-footer, .help-note p, .help-note a { font-size: 14px; }
+.main-nav a { font-size: 16px; min-height: 52px; border-radius: 12px; }
+.main-nav a.active { background: var(--blue-soft); color: var(--blue-hover); }
+.demo-strip { font-size: 14px; background: #e9eef5; color: #43536b; line-height: 1.6; }
+.demo-strip strong { color: #34465f; }
+.topbar { background: white; }.topbar-context, .small-button { font-size: 14px; }
+.small-button { min-height: 44px; }.workplace-picker select { font-size: 16px; }
+.content-footer { font-size: 14px; gap: 16px; flex-wrap: wrap; }
+.panel { border-radius: 18px; }.section-heading { flex-wrap: wrap; gap: 12px; }
+.section-heading h2 { font-size: 22px; }.panel h3 { font-size: 20px; }
+.notice, .form-message, .legal-details, .feedback p { font-size: 16px; }
+.badge, .status-label, .deadline-label { font-size: 14px; }
+.form-grid { gap: 4px 24px; }
+.form-save-state { position: sticky; top: 8px; z-index: 8; padding: 12px 16px; border: 1px solid var(--line); border-left: 4px solid #7085a5; background: white; border-radius: 10px; box-shadow: 0 4px 12px #17243b08; font-size: 15px; }
+.action-form :is(input, select, textarea, button, h3, summary), .risk-step-panel { scroll-margin-block: 110px; }
+[data-save-state="dirty"] > .form-save-state { border-left-color: #99610d; background: #fff9ed; }
+[data-save-state="saved"] > .form-save-state { border-left-color: #34715a; background: #f0f8f3; }
+[data-save-state="error"] > .form-save-state { border-left-color: #aa353e; background: #fff3f3; }
+.profile-section { max-width: 800px; padding: 28px 0; }
+.profile-section h2 { font-size: 28px; line-height: 1.45; }
+.profile-section>p:not(.eyebrow) { font-size: 18px; }
+.profile-steps li { font-size: 16px; }.profile-steps button { line-height: 1.6; }
+.profile-steps li[aria-current=step]>span { background: var(--blue); color: white; }
+.profile-work-options label { font-size: 16px; }.profile-section label small { font-size: 15px; }
+.profile-summary p, .profile-questions p, .profile-questions li { font-size: 16px; }
+.profile-questions { background: var(--surface-soft); border-radius: 0 14px 14px 0; }
+.profile-confirmation dt { font-size: 16px; }
+.profile-actions { gap: 14px; }.profile-actions .primary { margin-left: 0; }
+.risk-intro { font-size: 18px; max-width: 70ch; }
+.risk-intro .helper, .risk-attention { font-size: 15px; }
+.risk-step-nav button { font-size: 16px; gap: 10px; line-height: 1.6; }
+.risk-step-nav small { font-size: 14px; }.risk-step-nav [aria-current=step] { box-shadow: inset 0 -3px var(--blue); }
+.risk-step-panel { max-width: 980px; }.risk-step-panel>p { font-size: 18px; }
+.risk-step-panel .eyebrow { font-size: 14px; }
+.risk-step-panel .section-heading { padding: 4px 0 0; }
+.risk-step-panel .section-heading h3 { font-size: 28px; line-height: 1.45; }
+.risk-step-panel .section-heading>.muted { font-size: 15px; }
+.risk-step-panel label { font-size: 17px; margin: 24px 0; }
+.risk-record-values dt, .stored-task-record strong { font-size: 16px; }
+.risk-scene { border: 1px solid #d1dff3; border-radius: 16px; margin: 24px 0 8px; background: #f4f7fd; overflow: hidden; }
+.risk-scene>summary { padding: 12px 20px; color: var(--blue-hover); font-size: 15px; font-weight: 600; }
+.risk-scene[open]>summary { margin-bottom: 0; border-bottom: 1px solid #d1dff3; }
+.risk-scene-content { display: grid; grid-template-columns: minmax(160px,.8fr) minmax(0,1.2fr); align-items: center; gap: 22px; padding: 20px; }
+.risk-scene figure { margin: 0; }.work-scene { display: block; width: 100%; height: auto; max-height: 240px; }
+.risk-scene figcaption, .scene-label, .scene-counter { color: var(--muted); font-size: 14px; line-height: 1.6; }
+.risk-scene figcaption { text-align: center; margin-top: 10px; }
+.risk-scene h4 { font-size: 24px; line-height: 1.5; margin: 0 0 12px; }.risk-scene p { font-size: 17px; margin: 0; }
+.risk-story .work-scene { max-height: 250px; }.risk-story h3 { font-size: 24px; line-height: 1.5; margin: 8px 0; }
+.risk-story .scene-counter { margin: 12px 0 0; }.risk-story p:not(.scene-label):not(.scene-counter) { font-size: 17px; }
+.story-controls { display: flex; justify-content: space-between; gap: 12px; margin: 24px 0; }
+.risk-step-actions { max-width: 980px; }.risk-step-actions .helper { font-size: 15px; }
+.journey-saved-progress { font-size: 16px; }.journey-saved-progress small { font-size: 15px; }
+.journey-help-button, .journey-direct>summary, .journey-optional>summary, .journey-step-picker>summary { font-size: 16px; }
+.journey-document-next p { font-size: 17px; }.journey-secondary { font-size: 16px; }
+.task-guidance p, .task-guidance li { font-size: 17px; }.task-guidance h2 { font-size: 24px; }.task-guidance h3 { font-size: 20px; }
+.task-tabs button { font-size: 16px; }.task-list-description, .ledger-description { font-size: 16px; }
+.ledger-kind, .ledger-owner small, .ledger-basis, .legal-basis-status { font-size: 14px; }
+.ledger-action, .task-title, .document-row strong { font-size: 17px; }
+.task-meta, .document-row p, .document-row small, .detail-summary span, .detail-summary strong { font-size: 15px; }
+.document-fields, .document-heading, .document-preview>.muted { font-size: 14px; }
+.document-row:hover { background: var(--surface-soft); }.document-fields dt { background: var(--surface-soft); }
+.legal-details { background: var(--surface-soft); }.direct-record-tools li span, .previous-task-records li span { font-size: 15px; }
+@media (max-width: 1100px) {
+  .page-content { padding: 30px 24px; }
+  .journey-bento { grid-template-columns: 1fr; }.journey-bento:has(.journey-attention) .journey-hero { grid-row: auto; }
+  .journey-map-layout { grid-template-columns: 1fr; }
+  .journey-branch-detail>h2 { scroll-margin-top: 24px; }
+  .journey-branch-detail>h2:focus { outline: 2px solid var(--blue); outline-offset: 6px; }
+  .sidebar .brand { font-size: 16px; }.sidebar .brand small { font-size: 14px; }
+}
+@media (max-width: 700px) {
+  body { font-size: 17px; }.page-content { padding: 26px 18px 24px; }
+  .page-heading h1 { font-size: 28px; }.page-heading .lede { font-size: 17px; }
+  .main-nav { height: 82px; background: #fffffff5; }.main-nav a { font-size: 14px; line-height: 1.5; padding: 6px 2px; }
+  .main-nav a.active { background: transparent; }.main-nav a.active svg { background: var(--blue-soft); }
+  .demo-strip { font-size: 14px; padding: 9px 18px; }.topbar { height: auto; min-height: 76px; }
+  .workplace-picker select { width: min(160px, 42vw); font-size: 16px; }
+  .small-button { font-size: 14px; }.account-label { display: none; }
+  .content-footer { padding: 20px 18px 112px; font-size: 14px; }
+  .button, .next-action .button, .page-heading>.button { font-size: 16px; }
+  .profile-section h2 { font-size: 26px; }.profile-steps { gap: 12px; }
+  .profile-steps li { font-size: 15px; align-items: flex-start; }
+  .profile-steps li>span { margin-top: 8px; }
+  .profile-confirmation>div { gap: 6px; }
+  .risk-step-panel .section-heading h3 { font-size: 26px; }
+  .risk-scene-content { grid-template-columns: 1fr; padding: 18px; gap: 20px; }
+  .risk-scene .work-scene { max-height: 180px; }.risk-scene h4 { font-size: 22px; }
+  .risk-step-actions>.button { flex: 1 1 140px; }.risk-step-actions>.text-link { padding: 12px 0; }
+  .risk-step-nav button { font-size: 15px; }.risk-step-nav small { font-size: 14px; }
+  .form-save-state { top: 4px; font-size: 15px; }
+  .story-controls .button { padding: 10px; font-size: 15px; }
+  .document-row, .panel-padding { padding: 20px; }.document-fields>div { grid-template-columns: 1fr; }
+  .document-fields dt, .document-fields dd { padding: 10px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .story-frame { animation: scene-arrive .2s ease-out; }
+  [data-save-state="saved"]>.form-save-state { animation: scene-arrive .2s ease-out; }
+  @keyframes scene-arrive { from { transform: translateY(4px); } to { transform: translateY(0); } }
+}
+.task-cycles { margin-block: 24px; }
+.task-cycles details { margin-top: 18px; }
+.task-cycles summary { padding-block: 10px; cursor: pointer; font-weight: 650; }
+.task-cycles .notice { margin-block: 16px; }
+.task-cycles .notice p { margin-block: 8px; }
+.cycle-history { padding-left: 24px; }
+.cycle-history li { padding-block: 12px; border-bottom: 1px solid var(--line); }
+.cycle-history li span { display: block; font-size: 15px; color: var(--muted); }
+.cycle-history a[aria-current] { font-weight: 700; }

@@ -1,2 +1,15 @@
-import { PageHeading, Badge } from '@/components/ui';
-export default function RulePreparation() { return <><PageHeading eyebrow="법령 검토 준비" title="정확성을 위한 준비" description="실제 법령 규칙과 체험 규칙의 준비 상태를 구분합니다."/><div className="notice amber">승인된 실제 규칙 0개 · 법령 원문 전수 조사·전문 검토 미완료</div><section className="panel panel-padding"><h2>우선 조사 범위</h2><p>시설관리·유지보수 사업장의 실제 작업·책임 주체를 기준으로 두 법률과 시행령·시행규칙·별표·위임 고시·경과조치를 연결합니다.</p><ul className="source-list"><li><a href="https://www.law.go.kr/법령/산업안전보건법" target="_blank" rel="noreferrer">산업안전보건법 공식 원문 ↗</a><Badge status="needs_review">내용 검토 대기</Badge></li><li><a href="https://www.law.go.kr/법령/중대재해처벌등에관한법률" target="_blank" rel="noreferrer">중대재해 처벌 등에 관한 법률 공식 원문 ↗</a><Badge status="needs_review">내용 검토 대기</Badge></li></ul><p>링크 제공은 원문 확인·규칙 승인을 뜻하지 않습니다. 중대산업재해·중대시민재해 및 관련 안전 법령의 범위는 별도 조사합니다.</p><h2>검토와 배포 순서</h2><p>출처·대상 조문 조사 → 의무·질문·증빙 연결 → 사용자 1차 검토 → 필요한 외부 전문 검토 → 기대 사례 시험 → 승인 범위 배포.</p><p>이 화면에는 규칙 승인·배포 기능이 없습니다. 코딩 에이전트가 자신의 조사 결과를 전문 검토 완료로 승인하지 않습니다.</p></section></>; }
+import { PageHeading } from '@/components/ui';
+import { ReviewCatalog } from '@/components/review-catalog';
+import { demoOperatorContext } from '@/server/store';
+import { operatorPageClient } from '@/server/supabase';
+import { OperatorShell } from '@/components/operator-shell';
+import { Shell } from '@/components/shell';
+import { notFound } from 'next/navigation';
+
+export default async function RulePreparation() {
+  const content = <><PageHeading eyebrow="법령 검토 준비" title="업종·인원별 검토 목록" description="체크리스트·점검·교육·선임 등 검토할 항목과 근거를 살펴보세요."/><ReviewCatalog/></>;
+  if (await demoOperatorContext()) return <Shell operator>{content}</Shell>;
+  const { access } = await operatorPageClient();
+  if (!access.rules) notFound();
+  return <OperatorShell>{content}</OperatorShell>;
+}

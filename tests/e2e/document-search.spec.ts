@@ -1,0 +1,35 @@
+import { expect, test } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { completeProfile, startProfile } from './profile';
+
+test('자료함에서 저장한 기록을 현장·상태·제목으로 다시 찾아 연다', async ({ page }) => {
+  await startProfile(page); await completeProfile(page);
+  await page.goto('/app/tasks/new?definition=REVIEW-003&workplace=facility');
+  await page.getByRole('button', { name: '관리 시작', exact: true }).click();
+  await page.getByLabel('함께 살펴볼 작업·장소').fill('검색 뒤에도 남아 있는 현장 기록');
+  await page.getByRole('button', { name: '임시 저장', exact: true }).click();
+  await expect(page.locator('#stored-record')).toContainText('v1');
+  const taskPath = new URL(page.url()).pathname;
+  await page.goto('/app/documents');
+  const list = page.getByRole('region', { name: '자료 찾기', exact: true });
+  await expect(list.getByRole('link', { name: /위험성평가와 개선 추적 1회차/ })).toBeVisible();
+  await page.getByRole('combobox', { name: '현장', exact: true }).selectOption('facility');
+  await page.getByLabel('자료 상태').selectOption('not_requested');
+  await page.getByLabel('자료 제목').fill('찾을 수 없는 제목');
+  await page.getByRole('button', { name: '검색', exact: true }).click();
+  await expect(list).toContainText('조건에 맞는 자료가 없어요');
+  await expect(page).toHaveURL(/workplace=facility.*status=not_requested/);
+  await page.getByLabel('자료 제목').fill('위험성평가');
+  await page.getByRole('button', { name: '검색', exact: true }).click();
+  await expect(list).toContainText('검색 결과 1건');
+  await page.reload();
+  await expect(page.getByRole('combobox', { name: '현장', exact: true })).toHaveValue('facility');
+  await expect(page.getByLabel('자료 제목')).toHaveValue('위험성평가');
+  await page.setViewportSize({ width: 360, height: 900 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()).violations).toEqual([]);
+  await page.screenshot({ path: 'test-results/document-search-360.png', fullPage: true });
+  await list.getByRole('link', { name: /위험성평가와 개선 추적 1회차/ }).click();
+  await expect(page).toHaveURL(taskPath);
+  await expect(page.locator('#stored-record')).toContainText('검색 뒤에도 남아 있는 현장 기록');
+});

@@ -1,3 +1,3 @@
-import { Shell } from '@/components/shell';
-import { opsContext } from '@/server/store';
-export default async function OpsLayout({ children }: { children: React.ReactNode }) { await opsContext(); return <Shell operator>{children}</Shell>; }
+// Each page guards its own reads. Login must remain outside the protected portal.
+export const dynamic = 'force-dynamic';
+export default function OpsLayout({ children }: { children: React.ReactNode }) { return children; }
