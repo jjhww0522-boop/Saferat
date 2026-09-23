@@ -9,16 +9,22 @@ export function DocumentList({ result, filters, workplaces, path, operator = fal
 }) {
   const pages = Math.max(1, Math.ceil(result.total / result.pageSize));
   const statuses = filters.view === 'reviews' ? documentStatuses.filter(status => status !== 'not_requested') : documentStatuses;
-  return <section className="record-section" aria-label={filters.view === 'reviews' ? '검토 요청 찾기' : '자료 찾기'}>
-    <form action={path} method="get" className="workspace-form">
-      <div className="form-grid">
+  const hasConditions = !!filters.workplace || filters.status !== 'all';
+  const workplaceLabel = filters.workplace ? workplaces.find(workplace => workplace.id === filters.workplace)?.name ?? '접근할 수 없는 현장' : '전체 현장';
+  const statusLabel = filters.status === 'all' ? '모든 상태' : reviewStatusLabels[filters.status];
+  return <section className="record-section document-library" aria-label={filters.view === 'reviews' ? '검토 요청 찾기' : '자료 찾기'}>
+    <form action={path} method="get" className="workspace-form document-search-form">
+      <label>자료 제목<input type="search" name="q" defaultValue={filters.query} maxLength={200} placeholder="기억나는 제목을 입력하세요"/></label>
+      <details className="document-search-filters" open={hasConditions}>
+        <summary>검색 조건</summary>
+        <div className="form-grid">
         <label>현장<select name="workplace" defaultValue={filters.workplace ?? ''}><option value="">접근 가능한 모든 현장</option>{filters.workplace && !workplaces.some(workplace => workplace.id === filters.workplace) ? <option value={filters.workplace}>접근할 수 없는 현장</option> : null}{workplaces.map(workplace => <option key={workplace.id} value={workplace.id}>{workplace.name}</option>)}</select></label>
         <label>자료 상태<select name="status" defaultValue={filters.status}>{statuses.map(status => <option key={status} value={status}>{status === 'all' ? '모든 상태' : reviewStatusLabels[status]}</option>)}</select></label>
-        <label>자료 제목<input type="search" name="q" defaultValue={filters.query} maxLength={200} placeholder="기억나는 제목을 입력하세요"/></label>
-      </div>
-      <div className="button-row"><button className="button primary" type="submit">검색</button><Link className="button secondary" href={`${path}?status=all`}>조건 지우기</Link></div>
+        </div>
+      </details>
+      <div className="button-row document-search-actions"><button className="button primary" type="submit">검색</button><Link className="button secondary" href={`${path}?status=all`}>조건 지우기</Link></div>
     </form>
-    <p className="helper">검색 결과 {result.total}건 · {result.page} / {pages}페이지 · 페이지당 {result.pageSize}건</p>
+    <div className="document-search-summary"><p className="helper" role="status">검색 결과 {result.total}건</p><p className="document-applied-filters">적용 조건: {workplaceLabel} · {statusLabel}{filters.query ? ` · 제목 “${filters.query}”` : ''}</p></div>
     {filters.view === 'reviews' ? <p className="helper">보완 요청을 먼저 표시하고, 검토 대기는 요청한 날짜가 오래된 순서로 표시해요. 자료 검토와 실제 수행·기관 접수는 각각 확인해요.</p> : null}
     {result.items.length ? result.items.map(document => {
       const base = document.href ?? (operator ? `/ops/reviews/${document.id}` : `/workspace/documents/${document.id}`);
@@ -30,6 +36,7 @@ export function DocumentList({ result, filters, workplaces, path, operator = fal
         </div><span className={`badge ${document.review_status}`}>{reviewStatusLabels[document.review_status]}</span>
       </Link>;
     }) : <div className="empty"><h2>조건에 맞는 자료가 없어요</h2><p>현장·상태·제목 조건을 바꿔보세요. 접근 권한이 있는 자료만 표시해요.</p></div>}
+    <p className="helper document-page-info">{result.page} / {pages}페이지 · 페이지당 {result.pageSize}건</p>
     <nav className="button-row" aria-label="자료 목록 페이지">
       {result.page > 1 ? <Link className="button secondary" rel="prev" href={documentPageHref(path, filters, result.page - 1)}>이전 페이지</Link> : null}
       {result.page < pages ? <Link className="button secondary" rel="next" href={documentPageHref(path, filters, result.page + 1)}>다음 페이지</Link> : null}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { emptyRiskAssessment, emptyRiskHazard, readRiskAssessment, riskProgress, riskAssessmentSchema } from '@/domain/risk-assessment';
+import { emptyRiskAssessment, emptyRiskHazard, readRiskAssessment, riskProgress, riskAssessmentSchema, RiskInputError } from '@/domain/risk-assessment';
 import { parseTaskContent, readTaskForm, taskDefinition } from '@/domain/tasks';
 
 describe('위험성평가의 실제 기록과 확인·개선 분리', () => {
@@ -76,5 +76,43 @@ describe('위험성평가의 실제 기록과 확인·개선 분리', () => {
     expect(riskProgress(risk).steps[1].ready).toBe(false);
     expect(riskProgress(risk)).not.toHaveProperty('legalComplete');
     expect(riskProgress(risk)).not.toHaveProperty('review_status');
+  });
+});
+
+describe('위험성평가 날짜 오류의 입력 위치', () => {
+  const today = '2026-09-15';
+  function issueFor(value: unknown) {
+    try { readRiskAssessment(JSON.stringify(value), today); }
+    catch (error) { expect(error).toBeInstanceOf(RiskInputError); return (error as RiskInputError).issue; }
+    throw new Error('검증 오류가 필요합니다.');
+  }
+  it.each(['startedOn', 'finishedOn', 'learningOn', 'announcedOn', 'participationOn', 'sharedOn'] as const)('미래 실제일의 정확한 필드를 반환한다: %s', field => {
+    const value = { ...emptyRiskAssessment(), [field]: '2026-09-16' };
+    expect(() => readRiskAssessment(JSON.stringify(value), today)).toThrow('future_activity');
+    expect(issueFor(value)).toEqual({ field, message: expect.stringContaining('미래 날짜') });
+  });
+  it.each(['performedOn', 'verifiedOn'] as const)('두 번째 위험요인의 미래 실제일은 안정 ID를 반환한다: %s', field => {
+    const value = { ...emptyRiskAssessment(), hazards: [emptyRiskHazard('first'), { ...emptyRiskHazard('second:stable'), [field]: '2026-09-16' }] };
+    expect(issueFor(value)).toEqual({ field, hazardId: 'second:stable', message: expect.stringContaining('미래 날짜') });
+  });
+  it('평가 기간과 조치 후 확인일의 역전을 해당 입력으로 연결한다', () => {
+    expect(issueFor({ ...emptyRiskAssessment(), startedOn: today, finishedOn: '2026-09-14' })).toEqual({ field: 'finishedOn', message: '평가를 마친 날은 실제 시작한 날보다 빠를 수 없습니다.' });
+    const value = { ...emptyRiskAssessment(), hazards: [emptyRiskHazard('first'), { ...emptyRiskHazard('second'), performedOn: today, verifiedOn: '2026-09-14' }] };
+    expect(issueFor(value)).toEqual({ field: 'verifiedOn', hazardId: 'second', message: '조치 후 확인일은 실제 조치일보다 빠를 수 없습니다.' });
+    expect(riskAssessmentSchema.safeParse(value).success).toBe(false);
+  });
+  it('잘못된 날짜 형식은 입력값을 노출하지 않고 해당 필드로 연결한다', () => {
+    expect(issueFor({ ...emptyRiskAssessment(), learningOn: 'invalid-date-private' })).toEqual({ field: 'learningOn', message: expect.stringContaining('연-월-일') });
+    expect(issueFor({ ...emptyRiskAssessment(), hazards: [{ ...emptyRiskHazard('second'), dueOn: '2026-02-30' }] })).toEqual({ field: 'dueOn', hazardId: 'second', message: expect.stringContaining('연-월-일') });
+  });
+  it('모호한 위험요인 ID에는 특정 위치를 만들지 않는다', () => {
+    const value = { ...emptyRiskAssessment(), hazards: [emptyRiskHazard('duplicate'), { ...emptyRiskHazard('duplicate'), dueOn: 'invalid' }] };
+    expect(() => readRiskAssessment(JSON.stringify(value), today)).toThrow();
+    expect(() => readRiskAssessment(JSON.stringify(value), today)).not.toThrow(RiskInputError);
+  });
+  it('여러 오류는 첫 위치를 반환하고 미래 계획일과 빈 실제일은 보존한다', () => {
+    expect(issueFor({ ...emptyRiskAssessment(), learningOn: '2026-09-16', sharedOn: '2026-09-17' }).field).toBe('learningOn');
+    const value = { ...emptyRiskAssessment(), plannedOn: '2026-10-01', nextReviewOn: '2026-12-01', hazards: [{ ...emptyRiskHazard('planned'), dueOn: '2026-11-01' }] };
+    expect(readRiskAssessment(JSON.stringify(value), today)).toEqual(value);
   });
 });

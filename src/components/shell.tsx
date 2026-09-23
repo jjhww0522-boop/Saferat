@@ -7,7 +7,7 @@ import { selectWorkplace } from '@/server/actions';
 
 export async function Shell({ children, operator = false }: { children: React.ReactNode; operator?: boolean }) {
   const { actor, workplaces, workplace } = await context();
-  return <div className="workspace-shell">
+  return <div className={`workspace-shell ${operator ? 'operator-workspace' : 'member-workspace'}`}>
     <a href="#main-content" className="skip-link">본문으로 건너뛰기</a>
     <aside className="sidebar">
       <Link href={operator ? '/ops' : '/app'} className="brand"><span className="brand-symbol"><ShieldCheck size={23}/></span><span>사업장 안전관리<small>하나씩, 빠짐없이.</small></span></Link>
@@ -18,7 +18,7 @@ export async function Shell({ children, operator = false }: { children: React.Re
       <div className="sidebar-footer">{!operator ? <Link href="/app/settings">설정·사업장 관리</Link> : '차분하게 준비하는 안전한 일터'}</div></div>
     </aside>
     <div className="main-area">
-      <div className="demo-strip"><span><strong>체험 공간</strong> 가상 자료만 사용합니다 · 실제 법적 판단에 사용 불가</span><Link href="/demo">체험 안내</Link></div>
+      <div className="demo-strip"><span><strong>체험 공간</strong> 가상 자료만 사용하세요</span><Link href="/demo">체험 안내</Link></div>
       <header className="topbar"><div className="workplace-picker">
         {workplaces.length ? <form action={selectWorkplace}><label className="sr-only" htmlFor="workplace">현장 선택</label><select id="workplace" name="workplace" defaultValue={workplace?.id} key={workplace?.id}>{workplaces.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select><ChevronDown size={16} aria-hidden="true"/><button className="small-button">전환</button></form> : <strong>배정된 고객 없음</strong>}
         <span className="muted topbar-context">{operator ? '운영자 검토' : '가상 사업장'}</span></div>

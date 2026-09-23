@@ -8,6 +8,7 @@ import { uuid, workspaceError, type WorkspaceResult } from '@/domain/workspace';
 import { startDemoTask, startNextDemoTaskCycle, demoTaskEntry, saveDemoTask, saveDemoProfile, updateDemoTaskDocument } from './demo-tasks';
 import { requireDemoConfig } from '@/domain/config';
 import { canConfirmProfile } from '@/domain/workplace-profile';
+import { RiskInputError } from '@/domain/risk-assessment';
 
 function refresh() { revalidatePath('/workspace', 'layout'); revalidatePath('/app', 'layout'); revalidatePath('/ops', 'layout'); }
 export async function startTask(demo: boolean, _previous: WorkspaceResult, form: FormData): Promise<WorkspaceResult> {
@@ -55,7 +56,7 @@ export async function saveTask(demo: boolean, id: string, _previous: WorkspaceRe
     // a new body. Do not reread "latest": another writer may already have saved.
     const documentRevision = content ? !hadDocument ? 1 : input.document_revision! + (content === previousContent ? 0 : 1) : null;
     refresh(); return { ok: true, message: '기록을 저장했습니다. 실제 수행·검토 상태는 별도입니다.', savedBasis: { key: JSON.stringify([input.owner, input.target_date, content]), revisions: { task_revision: String(input.expected_revision + 1), document_revision: documentRevision === null ? '' : String(documentRevision) } } };
-  } catch (error) { return { ok: false, message: workspaceError(error) }; }
+  } catch (error) { return error instanceof RiskInputError ? { ok: false, message: error.issue.message, riskIssue: error.issue } : { ok: false, message: workspaceError(error) }; }
 }
 export async function startNextTaskCycle(demo: boolean, id: string, _previous: WorkspaceResult, form: FormData): Promise<WorkspaceResult> {
   try {

@@ -1,7 +1,124 @@
 # 개발 진행 기록
 
-업데이트: 2026-09-21
-현재 단계: Jev Ultrafast 도입 타당성 검토 완료, 실제 연동·성능 시험 미실행. 앞선 본문·버전 혼합 저장 결함 수정은 브라우저 12개·전체 단위 219개·lint·프로덕션 빌드 통과. 실제 연결·파일 검사·운영 복구·법령 승인·현장 사용자 검증은 미완료.
+업데이트: 2026-09-23
+현재 단계: 13개 관점의 반복 검수, 위험요인 제외 보호·날짜 오류 복구·자료 검색·저장 후 포커스 개선 구현. 최종 브라우저 회귀 15개·전체 단위 240개·빌드·lint 통과. 실제 연결·파일 검사·운영 복구·법령 승인·현장 사용자 검증은 미완료.
+
+
+## 2026-09-23 · 13개 관점의 반복 검수와 입력 복구
+
+### 검토 조직과 제품 판정
+
+- 사용자 요청에 따라 [제품 개선 조직](PRODUCT_TEAM.md)을 13개 관점으로 구체화하고, [검토 목록](PRODUCT_REVIEW_BACKLOG.md)에 재현 근거·반론·수용 기준·상태·다음 작업을 남겼다. AGENTS.md에도 다음 작업의 반복 절차를 연결했다. [회차 설계](plans/2026-09-23-inclusive-product-review-design.md)를 기준으로 기존 승인 범위 안에서 구현했다.
+- 3개 에이전트가 디자인/상호작용/구매, 초보/고령/현장/저시력, 법령/제조업/다사업장/운영 관점을 나눠 감사했다. 총괄은 제품/개발 신뢰성 관점을 맡았다. 여러 가상 관점이 실제 고객 13명이나 법률 전문가 검토를 의미하지 않는다.
+- 현재는 후보 안내·기록·보완 도구이며 전 업종·규모의 법적 이행을 모두 지원하는 제품이 아니다. 법령 적용 원장, 설비별 수행건, 본사 결정과 현장 조치 연결, 시민재해 범위 확인, 일반 업무 반출이 남아 있다. 승인 규칙 0개·미연결 조문 73개는 유지하며 법적 의무 전체 수로 해석하지 않는다.
+- 공식 법령 원문과 W3C 접근성 안내를 읽어 감사 근거를 기록했다. 법령 규칙·조문·수치·시행일을 새로 승인하거나 변경하지 않았다. 06-01 조문 개정일/08-01 전체 시행본은 오기로 단정하지 않고 원문 식별 재확인 항목으로 남겼다.
+
+### 구현한 흐름과 2차 검수
+
+- 위험요인: 빈 새 항목은 즉시 취소하고 내용 있는 항목은 대상·제외 범위·이전 저장본 보존을 설명한다. 계속 작성을 기본 포커스로 두고 Esc/취소 시 값·ID·현재 위치를 보존한다. 확정은 이번 초안의 미저장 변경이며 위험 해소가 아니다.
+- 날짜 오류: 서버 검증을 유지하면서 실제 오류 필드와 유일한 위험요인 ID를 반환한다. 숨은 단계·펼침·위험요인으로 이동해 입력에 초점을 두고 이유를 연결한다. 다른 입력·미확인 값·기존 저장 기준을 유지한다. 미래 계획일은 허용하며 미래 실제일/역전/잘못된 형식은 저장하지 않는다.
+- 자료함: 제목 검색을 먼저 두고 현장·상태는 검색 조건으로 펼친다. 활성 조건은 자동 펼치고 조건 요약·결과수·초기화·정확한 과거 검토 링크를 보존한다. 모바일 첫 화면에 자료 제목을 노출한다.
+- 저장 안내: 상세 성공 안내가 있을 때 중복 일반 성공 띠를 숨긴다. 저장/실패 이벤트는 저장 중 입력 잠금이 풀린 뒤 전달하여 다음 질문이나 오류 입력에 초점을 둘 수 있게 했다. 저장 중·실패·미저장 안내와 정확한 savedBasis/revision 처리는 보존한다.
+- 구현자와 다른 담당이 재검수했다. 관련 시작일을 고쳐 저장하면 이전 종료일 오류가 남는 P2를 발견해 성공 시 오류를 지웠다. 검사 라벨 불일치와 기존 취소 검사에 새 확인창 조작 누락도 수정했다. 서버 권한 선확인·실패 시 쓰기 없음·유일한 ID, 자료 검색 URL·조건·상세 링크, 저장 이벤트의 중복/지난 성공 오인 여부를 읽기 검수했다.
+
+### 변경 파일
+
+- 지침/문서: AGENTS.md, docs/{PRODUCT_TEAM,PRODUCT_REVIEW_BACKLOG,DECISIONS,PROGRESS}.md, docs/plans/2026-09-23-inclusive-product-review-design.md.
+- UI: src/components/{risk-hazard-remove,risk-assessment-form,workspace-form,document-list}.tsx, src/app/readability.css.
+- 서버/도메인: src/domain/{risk-assessment,workspace}.ts, src/server/task-actions.ts. DB·RPC·법령 규칙·의존성 변경 없음.
+- 검사: tests/unit/{risk-assessment,task-save-actions}.test.ts, tests/e2e/{risk-input-recovery,persona-recovery,persona-library,persona-feedback,hazard-resume,document-search}.spec.ts. 기존 미커밋 변경과 무관한 debug.log는 보존했다.
+
+### 실행·검증
+
+- 기존 3021 데모에서 독립 감사 스크립트 2개 실행: 위험요인 1→0 무확인 취소, 인원 관계 오류의 숨은 필드, 내용 확인 후 증빙 경로 단절을 재현했다. 360/1440px 자료함·홈·등록·위험성평가 캡처에서 검색 위계와 저장 후 입력 하단 가림을 확인했다. 실제 고객·휴대전화·장갑 시험은 아니다.
+- npm.cmd test -- tests/unit/risk-assessment.test.ts tests/unit/task-save-actions.test.ts --maxWorkers=2: 2파일·36개 통과. npm.cmd test -- --maxWorkers=2: 전체 25파일·240개 통과(42.64초). 실제 Supabase 호출은 mock이며 실연결 검증이 아니다.
+- npm.cmd run lint 전체 통과. npm.cmd run build 프로덕션 빌드·타입 검사 통과. 첫 브라우저 검사 후 성공 이벤트 시점 변경을 반영하기 위해 중간 빌드 1회는 완료 전 중단했으며 최종 전체 lint/build를 다시 통과했다.
+- PLAYWRIGHT_PORT=3023, npm.cmd run test:e2e -- tests/e2e/{risk-input-recovery,persona-recovery,persona-library,persona-feedback}.spec.ts --output=test-results/persona-round1: **4개 통과·1개 실패(7.9분)**. 실제 명령은 네 파일을 각각 지정했다. 실패는 persona-feedback의 다음 질문 포커스였으며 입력 가림 판정까지 도달하지 못했다. 가림은 별도 감사 캡처에서 재현된 문제다. 실패를 검사 라벨 문제로 돌리거나 기준을 낮추지 않고 입력 잠금 해제 뒤 성공 이벤트를 전달하도록 수정했다.
+- 최종 명령: PLAYWRIGHT_PORT=3023, npm.cmd run test:e2e -- tests/e2e/persona-feedback.spec.ts tests/e2e/persona-library.spec.ts tests/e2e/persona-recovery.spec.ts tests/e2e/risk-input-recovery.spec.ts tests/e2e/save-revision-refresh.spec.ts tests/e2e/hazard-resume.spec.ts tests/e2e/document-search.spec.ts tests/e2e/save-state.spec.ts tests/e2e/contextual-guidance.spec.ts --grep "모바일 저장 후|자료함 첫|위험요인 제외|숨은 두 번째|접힌 교육|서버 갱신도|자신의 연속|사업장 정보도|두 번째 위험요인의|보던 위험요인을|자료함에서|사업장 단계 이동|위험요인 추가·삭제|도움 요청과 실제 저장" --output=test-results/persona-final: **15개 모두 통과(11.2분)**. 첫 실패 시나리오도 통과했으며 최초 실패 기록을 보존한다. 반복 실행을 합산하지 않은 서로 다른 15개 시나리오다.
+- 새 검사: 360/1440px 자료 검색의 첫 제목·실제 클릭 가림·키보드·조건/재열람, 위험요인 제외 계속 작성/Esc/명시 확정·입력 ID/과거 v1 보존, 두 번째 위험요인의 숨은 오류·접힌 교육 날짜·역전된 평가 기간·관련 날짜로 오류 해결·수정 후 재열람, 저장 후 다음 질문 포커스·입력 상하단 클릭 대상·미저장 안내를 확인했다. 오류와 제외 확인 화면의 axe 및 모션 감소도 확인했다.
+- 회귀: 기존 저장 안내/도움/홈 재개, 두 번째 위험요인의 위치 재개·전송 실패·제외 후 위치 복구, 자료 검색, 실제 Next router.refresh 뒤 동시 수정 방어, 연속 저장·증빙·내용 확인 뒤 보완, 등록·위험요인 임시 저장/원상복원/실패/이탈 보호를 통과했다. DB/RPC 변경이 없어 DB 전용 검사는 이번에 재실행하지 않았다.
+- 화면 산출물: test-results/persona-feedback-360.png, persona-library-{360,1440}.png, persona-exclude-360.png, persona-date-error-360.png. 수정된 저장 후 화면과 자료함을 육안 확인했다. 첫 가림 감사 캡처 persona-visual-risk-criteria-natural-360.png 및 실패 trace는 보존한다.
+- git diff --check 통과. UTF-8 문서 6개와 상대 링크 25개 확인. 기존 .git 변경과 debug.log를 덮거나 제거하지 않았다.
+
+### 미검증·다음 작업
+
+- 저장 응답 유실 뒤 서버 결과와 현재 초안 대조(SAVE-01), 사업장 인원 관계 오류의 정확한 입력 복구(UX-03), 내용 확인 후 증빙 보완 경로(UX-04), 사진 관찰의 조치 추적·일반 업무 반출을 우선순위에 유지한다.
+- 실제 Supabase Auth/MFA/Storage/파일 검사/권한 철회/DB와 원본 복구, 법령 전문 승인, 실제 초보·고령·시설관리 고객·실제 모바일/확대 조작 시험은 미완료다. 브라우저 모사·axe·단위 검사로 이 조건을 통과시키지 않는다.
+- 공개 배포·고객 초대·외부 발송·실자료 입력은 이번 회차에 실행하지 않았다. 사용자 후속 Git 푸시 요청에 따라 검증된 앱·문서를 커밋·origin/main 반영 대상으로 확정했다. 로컬 debug.log와 테스트 산출물은 제외한다. 최종 미리보기 **http://127.0.0.1:3021/demo**를 재시작했다. APP_MODE=demo, AI_MODE=mock, OCR_MODE=mock, SAFETY_ENABLE_TEST_FIXTURES=0, npm.cmd run start -- --hostname 127.0.0.1 --port 3021. GET /demo 200, POST /api/testing/session 404 확인. 실제 고객 원본의 보존 환경이 아닌 데모다.
+
+## 2026-09-23 · 답변과 실제 저장 결과에 반응하는 UX
+
+### 구현한 흐름
+
+- 사용자의 정정대로 색·글자 정리에 그치지 않고 [답변별 안내 계획](plans/2026-09-23-contextual-guidance-design.md)을 구현했다. 디자인 담당이 초보자의 단절 지점을 감사하고, 개발/디자인 담당이 분리 구현했으며 운영 담당이 상태·문구를 읽기 검수했다. 실제 고객 시험은 아니다.
+- 사업장 정보의 도급 역할에 따라 관련 설명과 다른 업체 인원 입력이 선택 바로 아래에 나타난다. 역할 전환으로 기존 숫자를 지우지 않고 미확인과 0명을 구분한다. 확인 화면의 필수 누락·미확인 버튼은 정확한 단계/입력으로 이동하고 필요한 펼침을 연다.
+- 위험성평가 시작은 작업·장소 질문에 집중하고 구분·담당·일정은 펼쳐 입력한다. 전체 직접 입력에서도 기존 필드에 접근한다. 판단 기준은 긴 근거 설명보다 먼저 입력한다.
+- 설명·교육이 필요한 답변에 방법 안내·공식 자료를 연결했다. 도움말 열람은 교육 실시나 참석 사실을 만들지 않는다. ‘확인 필요로 저장’은 그 상태로 보관 후 다음 질문으로 이동하며, 임시 저장은 현재 위치를 유지한다.
+- 실제 성공 이벤트 뒤에 보관한 질문과 다음 질문을 표시한다. 편집·삭제·수동 이동·재제출 시작 시 지난 안내를 지우고 오류/저장 중에는 표시하지 않는다. 짧은 안내 등장·질문 전환·체크 모션과 모션 감소를 적용한다.
+- 홈은 저장 버전이 있는 현재 위험성평가 일반 초안에 한해 ‘보던 질문’과 질문별 재개 버튼을 표시한다. 기존 권한 경로의 커서를 사용하며 개선·보완·기한 우선순위와 링크는 유지한다. 보던 위치를 내용 저장이나 업무 완료로 표시하지 않는다.
+- 운영 검수의 저장 안내 잔존/이동 문구 지적을 반영했다. 직접 입력 모드에서도 실제 노출되는 버튼과 도움 문구가 일치하도록 보완했다.
+
+### 변경 파일
+
+- UI: src/components/{business-profile,risk-assessment-form,journey-home,task-home}.tsx, src/app/readability.css.
+- 신규 브라우저 검사: tests/e2e/contextual-guidance.spec.ts. tests/e2e/next-actions.spec.ts에 홈 주 안내의 개선조치 우선 보존 검사를 추가했다. 문서: docs/{DESIGN,DECISIONS,PROGRESS}.md, docs/plans/2026-09-23-contextual-guidance-design.md.
+- 기존 미커밋 변경을 보존했다. 저장 컨트롤러·서버 액션·DB/RPC·도메인 규칙·의존성 변경 없음.
+
+### 실행·검증
+
+- 기존 미리보기 프로세스를 중단한 뒤 빌드했다. npm.cmd run lint 전체 통과. npm.cmd test -- --maxWorkers=2: 25개 파일·219개 테스트 모두 통과(33.78초). npm.cmd run build: 프로덕션 빌드와 TypeScript 통과. 문구 후속 수정 뒤에도 빌드/전체 lint를 확인했다.
+- PLAYWRIGHT_PORT=3023, npm.cmd run test:e2e -- tests/e2e/contextual-guidance.spec.ts tests/e2e/journey.spec.ts tests/e2e/readability.spec.ts --output=test-results/contextual-guidance: **7개 통과, 1개 실패(4.2분)**. 새로운 역할 검사에서 select의 label 텍스트를 exact로 조회해 요소를 찾지 못하고 90초 제한에 걸렸다. 브라우저 접근성 스냅샷의 combobox 이름을 사용하도록 검사 조회를 바로잡았다. 앱 동작 검증을 삭제하거나 기준을 완화하지 않았다.
+- 위 실행에서 누락 입력 7곳의 포커스/펼침/이동만으로 저장되지 않음, 도움 요청/실패/성공/홈 재개, 기존 지도·저장/위치 재개, 모바일 입력 가림/도움말 복귀, 글꼴 실패/확대/접근성/모션 감소 검사는 통과했다.
+- 후속 명령: PLAYWRIGHT_PORT=3023, npm.cmd run test:e2e -- tests/e2e/contextual-guidance.spec.ts tests/e2e/business-profile.spec.ts tests/e2e/save-state.spec.ts tests/e2e/save-revision-refresh.spec.ts tests/e2e/next-actions.spec.ts tests/e2e/risk-assessment.spec.ts --grep "역할에 따른 후속|사업장 입력 네 단계|홈의 미확인 인원|저장한 개선조치는|서버 갱신도|자신의 연속 저장|사업장 정보도|위험성평가 단계 이동|위험성평가 모든 단계|사업장 단계 이동|위험요인 추가·삭제" --output=test-results/contextual-regression: **12개 모두 통과(9.4분)**.
+- 후속 실행은 역할 3종/역할 변경 값 보존/0명·미확인 재열람, 등록 4단계 320·360·768·1440px, 기존 정확한 보완 위치, 홈 개선조치 우선순위/검토 후에도 남은 조치, 위험성평가 7단계/여러 위험/과거 버전/미래 수행일 차단, 다른 탭 갱신·동시 수정/자기 연속 저장/증빙 후 보완/미저장 이탈 보호를 확인했다. 첫 실패 검사도 통과했으며 최초 실패 기록은 보존한다.
+- 역할 간 변경에서 설명 문구만 모션용으로 다시 표시하고 숫자 입력 DOM은 유지하도록 마지막으로 보완했다. 이 변경 뒤 npm.cmd run build(타입 검사 포함)와 수정한 컴포넌트/검사 파일의 ESLint를 다시 통과했다. PLAYWRIGHT_PORT=3023, npm.cmd run test:e2e -- tests/e2e/contextual-guidance.spec.ts --grep "역할에 따른 후속" --output=test-results/contextual-final: 최종 1개 통과(22.3초). 서로 다른 19개 브라우저 시나리오의 통과를 확인했으며 반복 실행은 별도 집계한다. 서버/DB를 바꾸지 않아 DB 전용 검사는 재실행하지 않았다.
+- 캡처: test-results/contextual-profile-360.png, contextual-help-360.png와 기존 readability 캡처. 360px 후속 질문·도움·저장 버튼을 육안 확인했다. git diff --check 및 신규 파일 UTF-8/끝 공백 검사를 통과했다.
+
+### 미검증·다음 작업
+
+- 최종 미리보기 **http://127.0.0.1:3021/demo**를 재시작했다. APP_MODE=demo, AI_MODE=mock, OCR_MODE=mock, SAFETY_ENABLE_TEST_FIXTURES=0으로 npm.cmd run start -- --port 3021 실행. GET /demo HTTP 200, POST /api/testing/session HTTP 404를 확인했다. 테스트 서버 3023은 종료했다.
+- 실제 Supabase 인증·DB/Storage·파일 검사·백업 복구·실제 iOS/Android 키보드·시설관리 고객 시험은 미실행이다. 승인된 운영 법령 규칙 0개·미연결 조문 73개와 저장 응답 유실 복구 등 기존 미완료를 유지한다.
+- 다음: 시설관리 사용자가 역할 답변 → 첫 기록 → 도움 요청 → 저장 → 재개를 수행하며 다음 행동을 이해하는지 확인한다. 이후 현장 발견 한 건의 사진·조치·재확인 흐름에도 같은 안내 방식을 적용한다.
+- 공개 배포·외부 발송·유료 호출·Git push 없음. 가상 체험은 메모리 저장이며 실제 고객 원본 입력용이 아니다.
+
+## 2026-09-22 · 디자인·사용성 중심 재구축
+
+### 구현한 흐름
+
+- 사용자 재구축 승인과 기존 선택(모바일 현장 우선, 단계 안내 + 전체 지도, 시설관리 우선)을 적용했다. [구현 계획](plans/2026-09-22-mobile-workspace-redesign.md)에 시각·내용·모션·검증 기준을 기록했다.
+- 홈은 오늘 할 일 → 다음 행동 하나 → 남은 확인 → 전체 지도 → 저장한 기록으로 정리했다. 큰 벤토·반복 그림을 제거하고 사업장 요약·전체 업무 검색·이전 기록 접근을 펼침으로 보존했다.
+- 등록은 4단계의 짧은 진행 표시와 실제 질문·입력 중심이다. 등록증 세부정보·인원 집계 근거를 펼쳐 입력하며 미확인·0명·확인 체크·수정 위치 이동·저장 기준을 보존했다.
+- 위험성평가는 입력을 업무 안내·회차 이력보다 먼저 배치했다. 7단계·세부 질문·전체 직접 입력·위험요인 안정 ID·입력 41개·미해결 위험·저장/재개를 유지했다. 담당자·준비 일정·추가 메모는 입력 다음에 펼친다. 그림/수동 3컷 설명은 도움말에서 제공한다.
+- Pretendard와 기존 아이콘을 유지하고 흰 면·회색 구획·파란 주 행동·글자 크기·간격을 통일했다. 모바일 편집 화면은 하단 주 메뉴를 숨기고 주 저장 버튼만 고정한다. 보조 이동·설명은 본문에 두고 도움말을 화면 폭에 맞는 하단 패널로 표시한다. 모션 감소와 포커스 복귀를 보존한다.
+- 실제 연결용 회원 셸도 공통 탐색을 사용하도록 정리했다. 로그인·서버·도메인·DB·권한·revision 로직은 변경하지 않았다. Supabase가 없어 실제 로그인 이후 탐색은 미검증이다.
+- 홈/등록/업무 입력을 독립 담당자가 구현하고 교차 검수했다. 회차 안내의 잘못된 방향 문구를 바로잡았다. 에이전트 검수는 실제 고객·법률 전문가 검증과 다르다.
+
+### 변경 파일
+
+- UI: src/app/readability.css, src/app/workspace/layout.tsx, src/components/{shell,navigation,journey-home,journey-welcome,task-home,business-profile,risk-assessment-form,risk-story,task-detail,task-forms,task-guidance,task-cycle-history}.tsx.
+- 브라우저 검사: tests/e2e/{profile.ts,business-profile.spec.ts,readability.spec.ts,risk-assessment.spec.ts,tasks.spec.ts}. 제목/펼침 경로 변경에 맞게 기존 검증을 유지하고 첫 화면 입력·버튼 위치·가림·하단 도움말 검사를 추가했다.
+- 문서: docs/{DESIGN,DECISIONS,PROGRESS}.md, docs/plans/2026-09-22-mobile-workspace-redesign.md. 의존성·비밀값·DB 마이그레이션 변경 없음.
+
+### 실행·검증
+
+- npm.cmd run lint: 최종 전체 검사 통과. 입력 순서·저장 영역 후속 수정까지 재검사했다.
+- npm.cmd test: 첫 실행은 81개 통과 후 15개 worker 시작 시간 초과로 실패했다. npm.cmd test -- --maxWorkers=2 재실행은 25개 파일·219개 테스트 모두 통과했다.
+- npm.cmd run build: 화면·저장 영역 수정 후 최종 프로덕션 빌드·타입 검사 통과.
+- PLAYWRIGHT_PORT=3023 npm.cmd run test:e2e -- tests/e2e/readability.spec.ts tests/e2e/business-profile.spec.ts tests/e2e/journey.spec.ts tests/e2e/mobile-map.spec.ts tests/e2e/save-state.spec.ts tests/e2e/save-revision-refresh.spec.ts tests/e2e/next-actions.spec.ts tests/e2e/risk-assessment.spec.ts tests/e2e/tasks.spec.ts tests/e2e/task-cycles.spec.ts: 30개 중 27개 통과, 3개 실패(20.2분). 실패를 성공으로 집계하지 않는다.
+- 첫 화면 검사는 위험성평가 입력 하단이 800px 화면에서 832.7px에 놓인 문제를 잡았다. 모바일의 숨긴 사이드바에 남은 PC용 60px 여백을 제거하고 입력 부가 설명을 아래로 옮겼다. 회차 검사에서 v1 표시의 대비 4.49:1을 발견해 배경·글자색·크기를 수정했다. 7단계×3화면/접근성 복합 검사는 90초 제한에 걸려 개별 검사 한도를 180초로 조정했다.
+- 새 빌드로 가독성·위험성평가·회차·지도·등록 화면 9개를 재검증: 8개 통과, 도움말 애니메이션 중 위치를 측정한 검사 1개 실패(6.6분). 실제 7단계·미래 수행일 차단과 회차 이력·대비 검사는 통과했다. 도움말 위치를 애니메이션 종료 시점까지 확인하도록 보정하고 브라우저 기본 최대 폭도 해제해 모바일 전체 폭으로 표시했다.
+- 다음 가독성 3개 실행은 2개 통과, 입력 가림 검사 1개 실패(1.8분). 고정 영역에 보조 이동·설명까지 들어가 위험성평가 첫 입력을 덮는 실제 결함을 발견했다. 등록·위험성평가·공통 기록의 고정 영역에는 주 저장 버튼만 남겼다. 범위·임계값을 완화하지 않고 입력 상단/하단의 실제 클릭 대상과 입력 후 가림까지 확인한다.
+- 최종: PLAYWRIGHT_PORT=3023 npm.cmd run test:e2e -- tests/e2e/readability.spec.ts --output=test-results/redesign-savebar → 3개 모두 통과(31.1초). 홈 첫 행동의 화면 내 위치, 첫 입력 가림 없음, 전체 폭 도움말·복귀, 입력 보존·저장·새로고침 재개, 글꼴 실패·확대·모션 감소를 확인했다.
+- 최종 저장 영역 회귀: PLAYWRIGHT_PORT=3023 npm.cmd run test:e2e -- tests/e2e/business-profile.spec.ts tests/e2e/save-state.spec.ts tests/e2e/tasks.spec.ts --grep "사업장 입력 네 단계|사업장 단계 이동|위험요인 추가·삭제|목록 → 전용" --output=test-results/redesign-save-regression → 4개 모두 통과(1.4분). 등록 4단계 320/360/768/1440px·접근성, 임시 저장/실패/재열람, 위험요인 추가·삭제/저장 중/이탈 보호, 증빙·별도 검토자 보완·새 버전 흐름을 확인했다. 최초 실패 3개는 후속 실행에서 모두 통과했으며 중간 실패 기록은 보존한다.
+- 320/360/768/1440px 등록 4단계, 홈 360/1440px·200% 상당 확대·글꼴 실패, 도움말 키보드/모션 감소, 지도/상세 수치, 실패 후 입력 보존, 다른 탭 갱신·동시 수정·연속 저장·검토 요청 보호, 별도 검토자 보완, 미확인/0 구분은 첫 실행에서 통과했다. 실제 모바일 기기·브라우저 확대 UI 조작·접근성 인증으로 해석하지 않는다.
+- 캡처는 test-results/에 생성하고 홈·등록의 모바일/데스크톱, 도움말, 최종 위험성평가 첫 화면을 육안 확인했다. 최종 대표 화면은 readability-home-360.png, readability-home-1440.png, redesign-profile-360.png, redesign-risk-first-360.png, redesign-risk-360.png다. git diff --check 통과.
+
+### 실행 범위·다음 작업
+
+- 로컬 체험은 APP_MODE=demo, AI_MODE=mock, OCR_MODE=mock, SAFETY_ENABLE_TEST_FIXTURES=0로 실행한다. 최종 미리보기 http://127.0.0.1:3021/demo 를 갱신하고 HTTP 200을 확인했다. 테스트 세션 API는 HTTP 404로 차단됨을 확인했다. 체험 자료는 메모리 저장이므로 재시작 시 초기화된다.
+- 실제 Supabase 인증·DB/Storage·파일 검사·백업 복구·실제 iOS/Android 키보드·시설관리 고객 사용성 시험은 미실행이다. 승인된 운영 법령 규칙 0개·미연결 조문 73개를 이번 UI 완료로 해소했다고 표시하지 않는다. 기존 미완료 항목을 보존한다.
+- 다음: 실제 시설관리 사용자에게 등록 → 첫 현장 기록 → 다시 열기 → 보완 과제를 수행하게 해 이해/실패 지점을 검증한다. 이어서 저장 응답 유실 확인, 현장 발견 한 건의 조치·재확인, 실제 연결과 법령 승인 작업을 진행한다.
+- 공개 배포·외부 발송·JEV 연동·추가 의존성 설치·Git push는 이번 단계에서 하지 않았다.
 
 ## 2026-09-21 · Jev Ultrafast 적용 검토
 

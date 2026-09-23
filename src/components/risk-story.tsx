@@ -31,5 +31,5 @@ const stepScenes = [
 
 export function RiskScene({ step }: { step: number }) {
   const scene = stepScenes[step];
-  return <details className="risk-scene" open><summary>그림으로 먼저 알아보기</summary><div className="risk-scene-content"><figure><WorkScene kind={scene.kind}/><figcaption>설명 예시 · 실제 현장과 다를 수 있어요</figcaption></figure><div><h4>{scene.title}</h4><p>{scene.text}</p></div></div></details>;
+  return <section className="risk-scene" aria-label="그림으로 알아보기"><div className="risk-scene-content"><figure><WorkScene kind={scene.kind}/><figcaption>설명 예시 · 실제 현장과 다를 수 있어요</figcaption></figure><div><h3>{scene.title}</h3><p>{scene.text}</p></div></div></section>;
 }

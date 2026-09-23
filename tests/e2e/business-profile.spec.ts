@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { completeProfile, confirmProfile, nextProfileStep, startProfile } from './profile';
 
 async function noTasks(page: Page) {
-  await expect(page.getByRole('heading', { name: '우리 사업장 관리 업무', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: '오늘 할 일', exact: true })).toHaveCount(0);
   await expect(page.locator('.task-board')).toHaveCount(0);
   await expect(page.locator('a[href*="/tasks/new"]')).toHaveCount(0);
 }
@@ -36,7 +36,7 @@ test('확인 전 목록 차단, 전송 실패 입력 유지와 임시 저장·�
   await noTasks(page);
   await page.reload();
   await noTasks(page);
-  await page.getByRole('button', { name: '등록정보', exact: true }).click();
+  await page.locator('.profile-step-picker > summary').click(); await page.getByRole('button', { name: '등록정보', exact: true }).click();
   await expect(page.getByLabel('사업장명', { exact: true })).toHaveValue('가상 저장 시험');
   await expect(page.getByLabel('등록 주소', { exact: true })).toHaveValue('');
   await expect(page.getByLabel('실제 작업 장소', { exact: true })).toHaveValue('가상 주방');
@@ -55,7 +55,7 @@ test('확인 전 목록 차단, 전송 실패 입력 유지와 임시 저장·�
   await expect(page.getByText('직접고용 인원 확인', { exact: true })).toHaveCount(0);
   await confirmProfile(page);
   await page.reload();
-  await expect(page.getByRole('heading', { name: '우리 사업장 관리 업무', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '오늘 할 일', exact: true })).toBeVisible();
 });
 
 test('최소 사실과 확인 체크가 필요하고 확인 후 관련 업무·조문과 보조 도구를 제공한다', async ({ page }) => {
@@ -104,7 +104,7 @@ test('업종·작업 변경은 관련 후보를 갱신하고 이미 저장한 �
   await startProfile(page);
   await completeProfile(page, 'food');
   await expect(page.locator('#task-REVIEW-031')).toHaveCount(0);
-  await page.goto('/app?setup=1'); await page.getByRole('button', { name: '등록정보', exact: true }).click();
+  await page.goto('/app?setup=1'); await page.locator('.profile-step-picker > summary').click(); await page.getByRole('button', { name: '등록정보', exact: true }).click();
   await nextProfileStep(page);
   await page.getByLabel('실제 업무에 가까운 업종').selectOption('manufacturing');
   await page.getByRole('checkbox', { name: '차량·하역', exact: true }).check();
@@ -119,7 +119,7 @@ test('업종·작업 변경은 관련 후보를 갱신하고 이미 저장한 �
   const before = Number(await revision.inputValue());
   await page.getByRole('button', { name: '임시 저장', exact: true }).click();
   await expect(revision).toHaveValue(String(before + 1));
-  await page.goto('/app?setup=1'); await page.getByRole('button', { name: '등록정보', exact: true }).click();
+  await page.goto('/app?setup=1'); await page.locator('.profile-step-picker > summary').click(); await page.getByRole('button', { name: '등록정보', exact: true }).click();
   await nextProfileStep(page);
   await page.getByRole('checkbox', { name: '차량·하역', exact: true }).uncheck();
   await page.getByLabel('실제 업무에 가까운 업종').selectOption('office');

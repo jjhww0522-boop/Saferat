@@ -13,6 +13,7 @@ test('자료함에서 저장한 기록을 현장·상태·제목으로 다시 �
   await page.goto('/app/documents');
   const list = page.getByRole('region', { name: '자료 찾기', exact: true });
   await expect(list.getByRole('link', { name: /위험성평가와 개선 추적 1회차/ })).toBeVisible();
+  await list.locator('.document-search-filters > summary').click();
   await page.getByRole('combobox', { name: '현장', exact: true }).selectOption('facility');
   await page.getByLabel('자료 상태').selectOption('not_requested');
   await page.getByLabel('자료 제목').fill('찾을 수 없는 제목');

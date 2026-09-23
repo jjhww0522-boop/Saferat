@@ -83,6 +83,9 @@ test('저장한 개선조치는 5단계로 이어지고 자료 검토 대기·�
   await page.getByLabel('자료 준비 목표일', { exact: true }).fill('2026-09-01');
   await saveTask(page);
   await page.goto('/app'); await openDirect(page);
+  const primary = page.getByRole('region', { name: '지금 함께 할 한 가지', exact: true });
+  await expect(primary.getByRole('link', { name: '조치 결과 기록', exact: true })).toHaveAttribute('href', /step=improve.*#task-editor$/);
+  await expect(primary).not.toContainText('보던 질문');
   const actions = page.getByRole('region', { name: '다음으로 할 일', exact: true });
   const improvement = actions.getByRole('link', { name: /위험성평가와 개선 추적.*조치 결과 기록/ });
   await expect(improvement).toContainText('개선·재확인이 남은 위험요인 1건');

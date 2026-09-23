@@ -14,12 +14,14 @@ export async function nextProfileStep(page: Page) {
 export async function confirmProfile(page: Page) {
   await page.getByRole('checkbox', { name: '입력 내용을 확인했습니다. 미확인 정보는 추가 확인 대상으로 남깁니다.' }).check();
   await page.getByRole('button', { name: '확인하고 업무 목록 보기', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '우리 사업장 관리 업무', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '오늘 할 일', exact: true })).toBeVisible();
   await openDirect(page);
 }
 
 // Complete the prerequisite through the same form members use, without cookie/API seeding.
 export async function completeProfile(page: Page, industry = 'facility') {
+  const picker = page.locator('.profile-step-picker:not([open]) > summary');
+  if (await picker.count()) await picker.click();
   await page.getByRole('button', { name: '등록정보', exact: true }).click();
   await page.getByLabel('사업장명', { exact: true }).fill('가상 시험 사업장');
   await page.getByLabel('실제 작업 장소', { exact: true }).fill('가상 시설 1층');
@@ -41,6 +43,6 @@ export async function openDirect(page: Page) {
 export async function expertRisk(page: Page) {
   const direct = page.getByRole('button', { name: '익숙하다면 · 전체 항목 직접 입력', exact: true });
   if (await direct.count()) await direct.click();
-  const metadata = page.locator('.task-form-fields > .journey-optional:not([open]) > summary');
+  const metadata = page.locator('.task-form-fields .journey-optional:not([open]) > summary');
   if (await metadata.count()) await metadata.click();
 }

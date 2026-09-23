@@ -19,7 +19,7 @@ test('위험성평가 단계 이동·부분 저장·여러 위험·실제 조치
   await page.getByRole('button', { name: '관리 시작', exact: true }).click();
   await expect(page).toHaveURL(/\/app\/tasks\/[0-9a-f-]+/);
   const path = new URL(page.url()).pathname;
-  await expect(page.locator('.risk-intro')).toContainText('0/7'); await expertRisk(page);
+  await expect(page.locator('.journey-saved-progress')).toContainText('0/7'); await expertRisk(page);
   await page.getByLabel('이번 평가의 구분').selectOption('initial');
   await page.getByLabel('함께 살펴볼 작업·장소').fill('시험 매장 세척과 운반');
   await page.getByLabel('평가 예정일').fill('2026-09-15');
@@ -38,7 +38,7 @@ test('위험성평가 단계 이동·부분 저장·여러 위험·실제 조치
   await step(page, '위험요인 찾기');
   await expect(page.getByLabel('어떤 작업인가요?').first()).toHaveValue('세척');
   await expect(page.getByLabel('어떤 작업인가요?').nth(1)).toHaveValue('');
-  await expect(page.locator('.risk-intro')).toContainText('2건');
+  await expect(page.locator('.risk-workflow .risk-status-summary')).toContainText('2건');
   await step(page, '위험 판단하기');
   const hazard = page.locator('.risk-hazard').first();
   await hazard.getByRole('combobox', { name: '위험 수준', exact: true }).selectOption('medium');
@@ -56,11 +56,11 @@ test('위험성평가 단계 이동·부분 저장·여러 위험·실제 조치
   await hazard.getByLabel('조치 후 남은 위험을 허용할 수 있나요?').selectOption('no');
   await hazard.getByLabel('확인 방법·결과·추가로 할 조치').fill('배수가 일부 부족하여 추가 개선 필요');
   await save(page);
-  await expect(page.locator('.risk-intro')).toContainText('2건');
+  await expect(page.locator('.risk-workflow .risk-status-summary')).toContainText('2건');
   await hazard.getByLabel('조치 후 남은 위험을 허용할 수 있나요?').selectOption('yes');
   await hazard.getByLabel('확인 방법·결과·추가로 할 조치').fill('추가 보수 후 배수 확인');
   await save(page); await page.reload();
-  await expect(page.locator('.risk-intro')).toContainText('1건');
+  await expect(page.locator('.risk-workflow .risk-status-summary')).toContainText('1건');
   await expect(page.getByText('기관 제출·접수: 미확인')).toBeVisible();
   await expect(page.getByText('수행 기록 없음', { exact: true })).toBeVisible();
   await page.locator('.version-history > summary').click();
@@ -73,6 +73,8 @@ test('위험성평가 단계 이동·부분 저장·여러 위험·실제 조치
 });
 
 test('위험성평가 모든 단계의 모바일·키보드·대비와 미래 수행일 차단', async ({ page }) => {
+  // Twenty-one step transitions and seven full accessibility audits run serially.
+  test.setTimeout(180_000);
   await startProfile(page); await completeProfile(page);
   await page.goto('/app/tasks/new?definition=REVIEW-003&workplace=facility');
   await page.getByRole('button', { name: '관리 시작', exact: true }).click();

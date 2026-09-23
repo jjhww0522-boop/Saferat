@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import type { RiskInputIssue } from './risk-assessment';
 
 /** The persisted inputs and their revisions travel together; never log or persist this client-only key. */
 export interface FormBasis { key: string; revisions: Record<string, string>; }
-export interface WorkspaceResult { ok: boolean; message: string; redirectTo?: string; token?: string; invitationId?: string; factorId?: string; secret?: string; savedBasis?: FormBasis; }
+export interface WorkspaceResult { ok: boolean; message: string; redirectTo?: string; token?: string; invitationId?: string; factorId?: string; secret?: string; savedBasis?: FormBasis; riskIssue?: RiskInputIssue; }
 
 export const uuid = z.string().uuid();
 export const documentInput = z.object({ workplace: uuid, title: z.string().trim().min(1).max(200), content: z.string().trim().min(1).max(20000), sensitive: z.boolean() });

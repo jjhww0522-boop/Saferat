@@ -39,6 +39,7 @@ export function WorkspaceForm({ action, children, trackChanges = false, changeKe
   const blockedMessage = useRef<HTMLParagraphElement>(null);
   const revisionBasis = useRef<[string, string][] | null>(null);
   const boundBasis = useRef(serverBasis);
+  const savedNext = useRef<string | null>(null);
   const baseline = useRef<string | null>(null), submitted = useRef(''), saving = useRef(false), allowUnload = useRef(false);
   const [dirty, setDirty] = useState(false), [saved, setSaved] = useState(false), [blocked, setBlocked] = useState(false);
   const snapshot = useCallback(() => changeKey ?? (form.current ? formSnapshot(form.current) : ''), [changeKey]);
@@ -54,11 +55,18 @@ export function WorkspaceForm({ action, children, trackChanges = false, changeKe
       setDirty(false); setSaved(true); setBlocked(false);
       if (result.redirectTo) allowUnload.current = true;
     }
-    if (result.ok) form.current?.dispatchEvent(new CustomEvent('workspace:saved', { detail: { next: data.get('journey_next') } }));
+    const next = data.get('journey_next');
+    if (result.ok) savedNext.current = typeof next === 'string' ? next : null;
     return result;
   }, { ok: false, message: '' });
   const [, startTransition] = useTransition();
   useEffect(() => { if (state.ok && state.redirectTo) router.push(state.redirectTo); }, [state.ok, state.redirectTo, router]);
+  useEffect(() => {
+    // Deliver feedback after controls become usable, so the next question can receive focus.
+    if (pending) return;
+    if (state.ok) form.current?.dispatchEvent(new CustomEvent('workspace:saved', { detail: { next: savedNext.current } }));
+    else if (state.riskIssue) form.current?.dispatchEvent(new CustomEvent('workspace:risk-error', { detail: state.riskIssue }));
+  }, [state, pending]);
 
   useEffect(() => {
     const current = boundBasis.current;

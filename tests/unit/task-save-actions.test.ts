@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readTaskForm, taskAnswerQuestions, taskDefinition } from '@/domain/tasks';
+import { emptyRiskAssessment, emptyRiskHazard } from '@/domain/risk-assessment';
 
 const mocks = vi.hoisted(() => ({ entry: vi.fn(), saveDemo: vi.fn(), member: vi.fn(), rpc: vi.fn(), task: vi.fn(), detail: vi.fn(), readVersion: vi.fn() }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
@@ -51,5 +52,60 @@ describe('저장 성공 응답은 실제 저장한 입력과 정확한 revision�
       expect(await saveTask(false, id, previous, form('관찰'))).toMatchObject({ ok: false });
       expect((await saveTask(false, id, previous, form('관찰'))).savedBasis).toBeUndefined();
     }
+  });
+});
+
+describe('위험성평가 저장 오류는 값을 쓰지 않고 정확한 위치를 반환한다', () => {
+  const riskDefinition = taskDefinition('REVIEW-003')!;
+  function riskForm(risk: ReturnType<typeof emptyRiskAssessment>) {
+    const data = form('');
+    data.set('questions_context', JSON.stringify(taskAnswerQuestions(riskDefinition, null)));
+    data.set('risk_assessment', JSON.stringify(risk));
+    return data;
+  }
+  beforeEach(() => {
+    vi.useFakeTimers(); vi.setSystemTime(new Date('2026-09-15T03:00:00Z'));
+    mocks.entry.mockResolvedValue({ entry: { task: { definition_id: riskDefinition.id }, document: null } });
+    mocks.task.mockResolvedValue({ definition_id: riskDefinition.id, document_id: null });
+  });
+  afterEach(() => vi.useRealTimers());
+  it.each([true, false])('두 번째 위험요인의 미래 조치일은 저장 전에 거부한다 (demo=%s)', async demo => {
+    const data = riskForm({ ...emptyRiskAssessment(), hazards: [emptyRiskHazard('first'), { ...emptyRiskHazard('second:stable'), performedOn: '2026-09-16' }] });
+    const original = data.get('risk_assessment');
+    const result = await saveTask(demo, id, previous, data);
+    expect(result).toEqual({ ok: false, message: expect.stringContaining('미래 날짜'), riskIssue: { field: 'performedOn', hazardId: 'second:stable', message: expect.stringContaining('미래 날짜') } });
+    expect(mocks.saveDemo).not.toHaveBeenCalled(); expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(data.get('risk_assessment')).toBe(original);
+  });
+  it.each([true, false])('역전된 기간과 재확인일도 새 저장 기준 없이 거부한다 (demo=%s)', async demo => {
+    const cases = [
+      { risk: { ...emptyRiskAssessment(), startedOn: '2026-09-15', finishedOn: '2026-09-14' }, issue: { field: 'finishedOn' } },
+      { risk: { ...emptyRiskAssessment(), hazards: [emptyRiskHazard('first'), { ...emptyRiskHazard('second'), performedOn: '2026-09-15', verifiedOn: '2026-09-14' }] }, issue: { field: 'verifiedOn', hazardId: 'second' } },
+    ];
+    for (const entry of cases) {
+      const result = await saveTask(demo, id, previous, riskForm(entry.risk));
+      expect(result).toMatchObject({ ok: false, riskIssue: entry.issue });
+      expect(result.savedBasis).toBeUndefined();
+    }
+    expect(mocks.saveDemo).not.toHaveBeenCalled(); expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+  it.each([true, false])('미래 계획일은 실제일로 간주하지 않고 저장한다 (demo=%s)', async demo => {
+    const risk = { ...emptyRiskAssessment(), plannedOn: '2026-10-01', nextReviewOn: '2026-12-01', hazards: [{ ...emptyRiskHazard('planned'), dueOn: '2026-11-01' }] };
+    const result = await saveTask(demo, id, previous, riskForm(risk));
+    expect(result.ok).toBe(true); expect(result.riskIssue).toBeUndefined(); expect(result.savedBasis).toBeDefined();
+    const content = demo ? mocks.saveDemo.mock.calls[0][2] : mocks.rpc.mock.calls[0][1].content;
+    expect(JSON.parse(content).risk).toEqual(risk);
+  });
+  it.each([true, false])('권한 확인 실패에서는 날짜 위치를 재분석하지 않는다 (demo=%s)', async demo => {
+    if (demo) mocks.entry.mockRejectedValue(new Error('access_denied'));
+    else mocks.member.mockRejectedValue(new Error('authentication_required'));
+    const result = await saveTask(demo, id, previous, riskForm({ ...emptyRiskAssessment(), sharedOn: '2026-09-16' }));
+    expect(result).toEqual({ ok: false, message: expect.stringMatching(/권한|로그인/) });
+    expect(mocks.saveDemo).not.toHaveBeenCalled(); expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+  it('날짜와 무관한 기존 입력 오류에는 임의 위치를 붙이지 않는다', async () => {
+    const result = await saveTask(false, id, previous, riskForm({ ...emptyRiskAssessment(), scope: 'x'.repeat(1501) }));
+    expect(result).toEqual({ ok: false, message: '입력 형식과 필수 항목을 확인해주세요.' });
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 });

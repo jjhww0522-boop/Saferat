@@ -28,6 +28,7 @@ test('목록 → 전용 기록 → 증빙 → 별도 검토자 보완 → 새 �
   const taskPath = new URL(page.url()).pathname;
   await page.getByLabel('확인 위치', { exact: true }).fill('가상 시설 1층');
   await page.getByLabel('사진에서 관찰한 내용').fill('가상 통로에 물품이 보임');
+  await page.locator('.task-form-fields .journey-optional > summary').click();
   await page.getByLabel('담당자', { exact: true }).fill('시험 담당자');
   await record(page);
   await page.reload();
@@ -83,7 +84,7 @@ test('공개 회원 화면에 운영 입구가 없고 역할 쿠키·직접 요�
   await expect(page.getByRole('heading', { name: '운영자 인증 연결 준비 중' })).toBeVisible();
   await page.goto('/ops/rules'); await expect(page).toHaveURL(/\/ops\/login$/);
   expect((await request.post('/api/testing/session', { data: { persona: 'reviewer' } })).status()).toBe(404);
-  await page.goto('/app'); await openDirect(page); await expect(page.getByRole('heading', { name: '우리 사업장 관리 업무' })).toBeVisible();
+  await page.goto('/app'); await openDirect(page); await expect(page.getByRole('heading', { name: '오늘 할 일' })).toBeVisible();
 });
 
 test('모든 후보의 공통 기록·핵심 계획 양식, 검색 복원·모바일 표시', async ({ page }) => {

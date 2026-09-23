@@ -35,6 +35,13 @@ export const riskAssessmentSchema = z.object({
 });
 export type RiskAssessment = z.infer<typeof riskAssessmentSchema>;
 export type RiskHazard = z.infer<typeof riskHazardSchema>;
+export interface RiskInputIssue { field: keyof RiskAssessment | keyof RiskHazard; hazardId?: string; message: string; }
+export class RiskInputError extends Error {
+  constructor(code: string, readonly issue: RiskInputIssue) { super(code); this.name = 'RiskInputError'; }
+}
+const actualDateFields = ['startedOn', 'finishedOn', 'learningOn', 'announcedOn', 'participationOn', 'sharedOn'] as const;
+const assessmentDateFields = ['plannedOn', ...actualDateFields, 'nextReviewOn'] as const;
+const hazardDateFields = ['dueOn', 'performedOn', 'verifiedOn'] as const;
 export function emptyRiskHazard(id: string): RiskHazard {
   return { id, work: '', location: '', hazard: '', people: '', existingControls: '', level: 'unknown', acceptable: 'unknown', decisionReason: '', measure: '', owner: '', dueOn: '', performedOn: '', performedNote: '', verifiedOn: '', verifier: '', residualAcceptable: 'unknown', verificationNote: '' };
 }
@@ -43,9 +50,32 @@ export function emptyRiskAssessment(): RiskAssessment {
 }
 export function readRiskAssessment(value: string, today: string): RiskAssessment {
   if (value.length > 20000) throw new Error('record_too_long');
-  const risk = riskAssessmentSchema.parse(JSON.parse(value));
-  const actualDates = [risk.startedOn, risk.finishedOn, risk.learningOn, risk.announcedOn, risk.participationOn, risk.sharedOn, ...risk.hazards.flatMap(h => [h.performedOn, h.verifiedOn])];
-  if (actualDates.some(d => d > today)) throw new Error('future_activity');
+  const input: unknown = JSON.parse(value);
+  const parsed = riskAssessmentSchema.safeParse(input);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0], field = first.path.at(-1);
+    if (first.path.length === 1 && assessmentDateFields.some(name => name === field)) {
+      throw new RiskInputError('invalid_risk_input', { field: field as keyof RiskAssessment, message: first.code === 'custom' && field === 'finishedOn' ? '평가를 마친 날은 실제 시작한 날보다 빠를 수 없습니다.' : '날짜를 연-월-일 형식으로 확인해주세요. 모르는 날짜는 비워두세요.' });
+    }
+    if (first.path.length === 3 && first.path[0] === 'hazards' && typeof first.path[1] === 'number' && hazardDateFields.some(name => name === field) && input && typeof input === 'object' && 'hazards' in input && Array.isArray(input.hazards)) {
+      const hazard = input.hazards[first.path[1]];
+      const id = riskHazardSchema.shape.id.safeParse(hazard?.id);
+      // An invalid or duplicate ID cannot identify the field safely in the editor.
+      if (id.success && input.hazards.filter(item => item?.id === id.data).length === 1) {
+        throw new RiskInputError('invalid_risk_input', { field: field as keyof RiskHazard, hazardId: id.data, message: first.code === 'custom' && field === 'verifiedOn' ? '조치 후 확인일은 실제 조치일보다 빠를 수 없습니다.' : '날짜를 연-월-일 형식으로 확인해주세요. 모르는 날짜는 비워두세요.' });
+      }
+    }
+    throw parsed.error;
+  }
+  const risk = parsed.data;
+  for (const field of actualDateFields) {
+    if (risk[field] > today) throw new RiskInputError('future_activity', { field, message: '실제 수행일에는 미래 날짜를 입력할 수 없습니다. 예정일과 구분해 확인해주세요.' });
+  }
+  for (const hazard of risk.hazards) {
+    for (const field of ['performedOn', 'verifiedOn'] as const) {
+      if (hazard[field] > today) throw new RiskInputError('future_activity', { field, hazardId: hazard.id, message: field === 'performedOn' ? '실제 조치일에는 미래 날짜를 입력할 수 없습니다. 계획은 조치 목표일에 적어주세요.' : '조치 후 실제 확인일에는 미래 날짜를 입력할 수 없습니다. 아직 확인하지 않았다면 비워두세요.' });
+    }
+  }
   return risk;
 }
 export function hasRiskContent(value: RiskAssessment) {

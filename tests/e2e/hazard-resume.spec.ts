@@ -70,6 +70,7 @@ test('보던 위험요인을 취소하고 저장하면 임의 선택 대신 복�
   const [first, second] = await prepare(page);
   await remember(page, `risk:2:0:${second}`, () => hazardPicker(page).selectOption(second));
   await visibleHazard(page).getByRole('button', { name: '이 위험요인 입력 취소' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: '초안에서 제외', exact: true }).click();
   await expect(page.getByText(/이전에 보던 위험요인을 현재 기록에서 찾지 못했어요/)).toBeVisible();
   await expect(visibleHazard(page)).toHaveCount(0);
   await save(page); await page.reload();
